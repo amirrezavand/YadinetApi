@@ -108,7 +108,7 @@ app.post("/logout",function(req,resp,next){
 })
 app.post("/signup",function(req,resp,next){
     var formData=req.body;
-    
+    resp.setHeader('Content-Type', 'application/json');
     if(formData.username.length&&formData.password.length>4){
         userModel.find({username:formData.username},function(err,user){
             if(err) console.log(err);
