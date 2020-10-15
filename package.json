@@ -1,0 +1,14 @@
+{
+    "name": "app",
+    "main": "server.js",
+    "author": "kian",
+    "version": "0.0.0",
+    "dependencies": {
+        "body-parser": "^1.19.0",
+        "express": "latest",
+        "express-session": "^1.17.1",
+        "helmet": "latest",
+        "mongoose": "^5.10.9",
+        "morgan": "^1.10.0"
+    }
+}
