@@ -106,6 +106,10 @@ app.post("/logout",function(req,resp,next){
     delete req.session.auth;
     resp.json({status: true, msg:"logout shodi"});
 })
+app.use(function(req,resp,next){
+    resp.header("Access-Control-Allow-Origin","*");
+    resp.header("Access-Control-Allow-Headers","Origin, X-Requested-With, Content-Type, Accept");
+});
 app.post("/signup",function(req,resp,next){
     var formData=req.body;
     resp.setHeader('Content-Type', 'application/json');
