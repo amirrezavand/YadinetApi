@@ -6,6 +6,7 @@ var app=express();
 var moragan=require("morgan");
 var session=require("express-session");
 var mongoose=require("mongoose");
+var jwt = require("jsonwebtoken");
 
 mongoose.connect("mongodb://localhost/yadinetDB");
 var db=mongoose.connection;
@@ -23,14 +24,16 @@ var userSchema=new mongoose.Schema({
     email: String ,
     username : String,
     password : String,
-    mobileNumber : String
+    mobileNumber : String,
+    isAdmin : Boolean
 });
 var userModel=mongoose.model("User",userSchema);
 
 var courseSchema=new mongoose.Schema({
+    sequnce : String,
     title : String,
     description : String,
-    courseimage : String,
+    courseImage : String,
     courseTime : String,
     teacher : String,
     keyword : String,
@@ -92,19 +95,35 @@ app.post("/getInfo",function(req,resp,next){
 })
 app.post("/login",function(req,resp,next){
     console.log("login");
+	// console.log(req.session);
     if(req.session.auth!=undefined){
         resp.json({status:false ,msg:"کاربر مورد نظر قبلا لاگین می‌باشد."});
     }
     else{
-        userModel.find({username:req.body.username},function(err,user){
-            console.log(user[0].password);
+        userModel.find({email:req.body.email},function(err,user){
             if(err) console.log(err);
             else if(user.length>0){
-                console.log(user.password);
+                console.log(user[0].password);
                 console.log(req.body.password);
                 if(user[0].password==req.body.password){
-                    req.session.auth={username:req.body['username']};
-                    resp.json({status:"true",msg:"ورود موفقیت آمیز بود."});
+                    // req.session.auth={username:user[0].username};
+                    const token = jwt.sign(
+                        {
+                            user: {
+                                email: user[0].email ,
+                                username : user[0].username,
+                                password : user[0].password,
+                                mobileNumber : user[0].mobileNumber,
+                                isAdmin : user[0].isAdmin
+                            }
+                        },
+                        "secret",
+                        {
+                            expiresIn: "240h"
+                        }
+                    );
+                    resp.json(token);
+                    resp.json({status:"true",msg:"ورود موفقیت آمیز بود.",token:token});
                     console.log(req.session);
                 }
                 else{
@@ -140,7 +159,8 @@ app.post("/signup",function(req,resp,next){
                     email:formData.email||" ",
                     password:formData.password,
                     username:formData.username,
-                    mobileNumber:formData.mobileNumber||" "
+                    mobileNumber:formData.mobileNumber||" ",
+                    isAdmin : false
                 })
                 newUser.save();
                 console.log(newUser);
@@ -153,29 +173,82 @@ app.post("/signup",function(req,resp,next){
     }
 })
 
+// sequnce : String,
+// title : String,
+// description : String,
+// courseImage : String,
+// courseTime : String,
+// teacher : String,
+// keyword : String,
+// price : String,
+// salePercent : String,
+// studentNumber : String,
+// courseLevel : String,
+// courseStatus : String,
+// lastEdite : String,
+// shortLink : String,
+// seeNumber : String
 app.post("/courseRegister",function(req,resp,next){
     var formData=req.body;
-    if(formData.username.length&&formData.password.length>4){
-        userModel.find({username:formData.username},function(err,user){
+    if(formData.title.length){
+        courseModel.find({title:formData.title},function(err,course){
             if(err) console.log(err);
-            else if(user.length){
-                resp.json({status:false,msg:"کاربری با این نام کاربری وجود دارد!"})
+            else if(course.length){
+                resp.json({status:false,msg:"دوره‌ای با عنوان مشابه موجود می‌باشد."})
             }
             else{
-                var newUser= new userModel({
-                    email:formData.email||" ",
-                    password:formData.password,
-                    username:formData.username,
-                    mobileNumber:formData.mobileNumber||" "
+                var newCourse= new courseModel({
+                    sequnce : formData.sequnce||" ",
+                    title : formData.title,
+                    description : formData.description||" ",
+                    courseImage : formData.courseImage||" ",
+                    courseTime : formData.courseTime||" ",
+                    teacher : formData.teacher||" ",
+                    keyword : formData.keyword||" ",
+                    price : formData.price||" ",
+                    salePercent : formData.salePercent||" ",
+                    studentNumber : formData.studentNumber||" ",
+                    courseLevel : formData.courseLevel||" ",
+                    courseStatus : formData.courseStatus||" ",
+                    lastEdite : formData.lastEdite||" ",
+                    shortLink : formData.shortLink||" ",
+                    seeNumber : formData.seeNumber||" "
                 })
-                newUser.save();
-                console.log(newUser);
-                resp.json({ status:true , msg:"کاربر با موفقیت ساخته شد!" });
+                newCourse.save();
+                console.log(newCourse);
+                resp.json({ status:true , msg:"دوره با موفقیت ثبت یا ویرایش گردید" });
             }
         })
     }
     else{
-        resp.json({status : false , msg : "نام کاربری یا پسورد ندارد!"});
+        resp.json({status : false , msg : "عنوان دوره باید دارای مقدار باشد."});
+    }
+})
+// courseID : String,
+// sequnce : String,
+// title : String,
+// lessonTime : String,
+// price : String,
+// downloadLink : String,
+// description : String
+app.post("/lessonRegister",function(req,resp,next){
+    var formData=req.body;
+    if(formData.title.length){    
+            var newLesson= new lessonModel({
+                courseID : formData.courseID||" ",
+                sequnce : formData.sequnce||" ",
+                title : formData.title,
+                lessonTime : formData.lessonTime||" ",
+                price : formData.price||" ",
+                downloadLink : formData.downloadLink||" ",
+                description : formData.description||" "
+            })
+            newLesson.save();
+            console.log(newLesson);
+            resp.json({ status:true , msg:"درس با موفقیت ثبت یا ویرایش گردید" });
+    }
+    else{
+        resp.json({status : false , msg : "عنوان درس باید دارای مقدار باشد."});
     }
 })
 
