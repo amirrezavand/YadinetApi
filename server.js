@@ -25,25 +25,35 @@ var userSchema=new mongoose.Schema({
     password : String,
     mobileNumber : String
 });
-var userModel=mongoose.model("User",userSchema)
-// var amir=new humanModel({
-//     name:"amir1", 
-//     age:20,
-//     username:"amirreza"
-// });
-// console.log(amir);
-// console.log(amir.username);
-// amir.save(function(err,data){
-//     if(err) console.log(err);
-//     else console.log(amir);
-//     //findOne---> for first search result
-//     humanModel.find({username:"amirreza"},function(err,data){
-//         if(err) throw err;
-//         else console.log("find:",data);
-//     })
-// });
+var userModel=mongoose.model("User",userSchema);
 
-
+var courseSchema=new mongoose.Schema({
+    title : String,
+    description : String,
+    courseimage : String,
+    courseTime : String,
+    teacher : String,
+    keyword : String,
+    price : String,
+    salePercent : String,
+    studentNumber : String,
+    courseLevel : String,
+    courseStatus : String,
+    lastEdite : String,
+    shortLink : String,
+    seeNumber : String
+})
+var courseModel=mongoose.model("Course",courseSchema)
+var lessonSchema=new mongoose.Schema({
+    courseID : String,
+    sequnce : String,
+    title : String,
+    lessonTime : String,
+    price : String,
+    downloadLink : String,
+    description : String
+})
+var lessonModel=mongoose.model("Lesson",lessonSchema)
 
 
 
@@ -60,11 +70,7 @@ app.use(morgan("common"));
 app.use(express.static(__dirname+"/static"));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({extended:true}))
-var users={
-    admin:"admin123" ,
-    amir:"amirreza90060",
-    user:"reallyUser"
-};
+
 var comments={
     "amir":["slam","khobi"],
     "user":["hi"]
@@ -85,22 +91,32 @@ app.post("/getInfo",function(req,resp,next){
     resp.json(req.session);
 })
 app.post("/login",function(req,resp,next){
-    for(user in users){
-        if(req.body['username']==user){
-            if(req.body['password']==users[user]){
-                req.session.auth={username:req.body["username"]};
-                resp.json({status:"true",msg:"login shodi!"});
-                console.log(req.session);
-                return;
-            }else{
-                resp.json({status:"false",msg:"password qualat"});
-                return;
-            }
-        }
+    console.log("login");
+    if(req.session.auth!=undefined){
+        resp.json({status:false ,msg:"کاربر مورد نظر قبلا لاگین می‌باشد."});
     }
-    resp.json({status:"false",msg:"user yaft nasho"});
-
-});
+    else{
+        userModel.find({username:req.body.username},function(err,user){
+            console.log(user[0].password);
+            if(err) console.log(err);
+            else if(user.length>0){
+                console.log(user.password);
+                console.log(req.body.password);
+                if(user[0].password==req.body.password){
+                    req.session.auth={username:req.body['username']};
+                    resp.json({status:"true",msg:"ورود موفقیت آمیز بود."});
+                    console.log(req.session);
+                }
+                else{
+                    resp.json({status:"false",msg:"پسورد وارد شده اشتباه می‌باشد"})
+                }
+            }
+            else{
+                resp.json({status:"false",msg:"نام کاربری مورد نظر وجود ندارد."})
+            }
+        });
+    }
+})
 app.post("/logout",function(req,resp,next){
     // req.session.auth={};
     delete req.session.auth;
@@ -109,10 +125,10 @@ app.post("/logout",function(req,resp,next){
 app.use(function(req,resp,next){
     resp.header("Access-Control-Allow-Origin","*");
     resp.header("Access-Control-Allow-Headers","Origin, X-Requested-With, Content-Type, Accept");
+    next();
 });
 app.post("/signup",function(req,resp,next){
     var formData=req.body;
-    resp.setHeader('Content-Type', 'application/json');
     if(formData.username.length&&formData.password.length>4){
         userModel.find({username:formData.username},function(err,user){
             if(err) console.log(err);
@@ -135,25 +151,34 @@ app.post("/signup",function(req,resp,next){
     else{
         resp.json({status : false , msg : "نام کاربری یا پسورد ندارد!"});
     }
-
-    // email: String ,
-    // username : String,
-    // password : String,
-    // mobileNumber : String
-
-
-
-
-
-
-    // if(req.body.username.length&&req.body.password.length>=4){
-    //     users[req.body.username]=req.body.password;
-    //     resp.json({status:true,msg:"sabtnam shodi ba passworde"+users[req.body.username]});
-    //     console.log(users);
-    // }else{
-    //     resp.json({status:false,msg:"amaliate sabtnam anjam nashod!"});
-    // }
 })
+
+app.post("/courseRegister",function(req,resp,next){
+    var formData=req.body;
+    if(formData.username.length&&formData.password.length>4){
+        userModel.find({username:formData.username},function(err,user){
+            if(err) console.log(err);
+            else if(user.length){
+                resp.json({status:false,msg:"کاربری با این نام کاربری وجود دارد!"})
+            }
+            else{
+                var newUser= new userModel({
+                    email:formData.email||" ",
+                    password:formData.password,
+                    username:formData.username,
+                    mobileNumber:formData.mobileNumber||" "
+                })
+                newUser.save();
+                console.log(newUser);
+                resp.json({ status:true , msg:"کاربر با موفقیت ساخته شد!" });
+            }
+        })
+    }
+    else{
+        resp.json({status : false , msg : "نام کاربری یا پسورد ندارد!"});
+    }
+})
+
 
 app.post("/submitComment",function(req,resp,next){
     if(req.session.auth.username!=undefined){
