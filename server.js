@@ -93,6 +93,17 @@ app.post("/",function(req,resp,next){
 app.post("/getInfo",function(req,resp,next){
     resp.json(req.session);
 })
+
+app.post("/logout",function(req,resp,next){
+    // req.session.auth={};
+    delete req.session.auth;
+    resp.json({status: true, msg:"logout shodi"});
+})
+app.use(function(req,resp,next){
+    resp.header("Access-Control-Allow-Origin","*");
+    resp.header("Access-Control-Allow-Headers","Origin, X-Requested-With, Content-Type, Accept");
+    next();
+});
 app.post("/login",function(req,resp,next){
     console.log("login");
 	// console.log(req.session);
@@ -136,16 +147,6 @@ app.post("/login",function(req,resp,next){
         });
     }
 })
-app.post("/logout",function(req,resp,next){
-    // req.session.auth={};
-    delete req.session.auth;
-    resp.json({status: true, msg:"logout shodi"});
-})
-app.use(function(req,resp,next){
-    resp.header("Access-Control-Allow-Origin","*");
-    resp.header("Access-Control-Allow-Headers","Origin, X-Requested-With, Content-Type, Accept");
-    next();
-});
 app.post("/signup",function(req,resp,next){
     var formData=req.body;
     if(formData.username.length&&formData.password.length>4){
@@ -251,6 +252,14 @@ app.post("/lessonRegister",function(req,resp,next){
         resp.json({status : false , msg : "عنوان درس باید دارای مقدار باشد."});
     }
 })
+app.post("/usersGet",function(req,resp,next){
+    var formData=req.body;
+    // if(formData.start>0&&formData.end>formData.first){
+
+    // }
+    var get=[{email:"ar.rezavand@gmail.com",username:"ar.rezavand",mobileNumber:"09189096128"},
+            ]
+})
 
 
 app.post("/submitComment",function(req,resp,next){
@@ -275,7 +284,7 @@ app.post("/getComments",function(req,resp,next){
 
 
 
-app.listen(80);
+app.listen(8000);
 console.log("app running on port 8000");
 
 
